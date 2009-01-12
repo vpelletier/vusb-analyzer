@@ -35,6 +35,7 @@ Contact
 
 This project is provided as-is, with no official support from
 VMware. However, I will try to answer questions as time permits.
-If you have questions, feel free to email me at: micah at vmware.com
+If you have questions or you'd like to submit a patch, feel free
+to email me at: micah at vmware.com
 
 --
