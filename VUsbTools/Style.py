@@ -11,7 +11,11 @@
 import math
 from VUsbTools.Types import Color
 
-monospaceFont = "courier 8"
+#
+# Use the default monospace font.  If this is too large/small for your
+# tastes, you can try a specific font name and size like "courier 9".
+#
+monospaceFont = "monospace"
 
 def toMonospaceMarkup(text):
     """Convert arbitrary text to pango markup in our monospace font"""
