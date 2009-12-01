@@ -76,7 +76,6 @@ class UsbIOParser(Types.psyobj):
             self.completed.put(self.current)
             self.current = Types.Transaction()
 
-
 class TimestampLogParser:
     """Parse a simple format which logs timestamps in nanosecond resolution.
        Lines are of the form:
@@ -454,6 +453,199 @@ class EllisysXmlParser:
         self.xmlParser.feed(line)
 
 
+class UsbmonLogParser:
+    """Parses usbmon log lines and generates Transaction objects appropriately.
+       Finished transactions are pushed into the supplied queue.
+
+       This parser was originally contributed by Christoph Zimmermann.
+       """
+    lineOriented = True
+    lineNumber = 0
+
+    def __init__(self, completed):
+        self.epoch = None
+        self.trans = Types.Transaction()
+        self.trans.frame = 0
+        self.completed = completed
+
+    def parse(self, line, timestamp=None, frame=None):
+        self.lineNumber += 1
+        tokens = line.split()
+        try:
+            # Do a small stupid sanity check if this is a correct usbmon log line
+            try:
+                if len(tokens) < 4:
+                    return
+                if not(int(tokens[0],16) and int(tokens[1]) and
+                       (tokens[2] in ('S', 'C', 'E'))):
+                    return
+            except:
+                print "Error on line %d:" % self.lineNumber
+                return
+
+            # Copied log file format description of the usbmon kernel
+            # facility You can find the original manual including how
+            # to use usbmon in your kernel sources: <linux
+            # sources>/Documentation/usb/usbmon.txt
+            #
+            # Copied text starts here:
+            # Any text format data consists of a stream of events,
+            # such as URB submission, URB callback, submission
+            # error. Every event is a text line, which consists of
+            # whitespace separated words. The number or position of
+            # words may depend on the event type, but there is a set
+            # of words, common for all types.
+
+            # Here is the list of words, from left to right:
+
+            # - URB Tag. This is used to identify URBs, and is
+            #   normally an in-kernel address of the URB structure in
+            #   hexadecimal, but can be a sequence number or any other
+            #   unique string, within reason.
+
+            self.trans.lineNumber = self.lineNumber
+
+            # - Timestamp in microseconds, a decimal number. The
+            #   timestamp's resolution depends on available clock, and
+            #   so it can be much worse than a microsecond (if the
+            #   implementation uses jiffies, for example).
+
+            # Extract the time, convert to seconds
+            microtime = int(tokens[1])
+            if not self.epoch:
+                self.epoch = microtime
+            timestamp = (microtime - self.epoch) / 1000000.0
+
+            self.trans.timestamp = timestamp
+
+            # - Event Type. This type refers to the format of the
+            #   event, not URB type.  Available types are: S -
+            #   submission, C - callback, E - submission error.
+
+            if tokens[2] == 'S':
+                self.trans.dir = 'Down'
+            else:
+                self.trans.dir = 'Up'
+
+            # - "Address" word (formerly a "pipe"). It consists of
+            #   four fields, separated by colons: URB type and
+            #   direction, Bus number, Device address, Endpoint
+            #   number.  Type and direction are encoded with two bytes
+            #   in the following manner:
+            #
+            #     Ci Co   Control input and output
+            #     Zi Zo   Isochronous input and output
+            #     Ii Io   Interrupt input and output
+            #     Bi Bo   Bulk input and output
+            #
+            #   Bus number, Device address, and Endpoint are decimal
+            #   numbers, but they may have leading zeros, for the sake
+            #   of human readers.
+            #
+            #   Note that older kernels seem to omit the bus number field.
+            #   We can parse either format.
+
+            pipe = tokens[3].split(':')
+
+            self.trans.dev = int(pipe[-2])
+            self.trans.endpt = int(pipe[-1])
+
+            if pipe[0][1] == 'i':
+                # Input endpoint
+                self.trans.endpt |= 0x80
+
+            if len(pipe) >= 4:
+                self.trans.dev = int(pipe[1]) * 1000
+
+            # - URB Status word. This is either a letter, or several
+            #   numbers separated by colons: URB status, interval,
+            #   start frame, and error count. Unlike the "address"
+            #   word, all fields save the status are
+            #   optional. Interval is printed only for interrupt and
+            #   isochronous URBs. Start frame is printed only for
+            #   isochronous URBs. Error count is printed only for
+            #   isochronous callback events.
+            #
+            #   The status field is a decimal number, sometimes
+            #   negative, which represents a "status" field of the
+            #   URB. This field makes no sense for submissions, but is
+            #   present anyway to help scripts with parsing. When an
+            #   error occurs, the field contains the error code.
+            #
+            #   In case of a submission of a Control packet, this
+            #   field contains a Setup Tag instead of an group of
+            #   numbers. It is easy to tell whether the Setup Tag is
+            #   present because it is never a number. Thus if scripts
+            #   find a set of numbers in this word, they proceed to
+            #   read Data Length (except for isochronous URBs).  If
+            #   they find something else, like a letter, they read the
+            #   setup packet before reading the Data Length or
+            #   isochronous descriptors.
+            #
+            # - Setup packet, if present, consists of 5 words: one of
+            #   each for bmRequestType, bRequest, wValue, wIndex,
+            #   wLength, as specified by the USB Specification 2.0.
+            #   These words are safe to decode if Setup Tag was
+            #   's'. Otherwise, the setup packet was present, but not
+            #   captured, and the fields contain filler.
+            #
+            # - Number of isochronous frame descriptors and
+            #   descriptors themselves.  If an Isochronous transfer
+            #   event has a set of descriptors, a total number of them
+            #   in an URB is printed first, then a word per descriptor,
+            #   up to a total of 5. The word consists of 3
+            #   colon-separated decimal numbers for status, offset, and
+            #   length respectively. For submissions, initial length is
+            #   reported. For callbacks, actual length is reported.
+
+            if tokens[4] in ('s'):
+                self.trans.status = 0
+
+                hexdata = (string.replace("".join(tokens[5:10]), " ", ""))
+                data = []
+                i = 0
+                while i < len(hexdata):
+                    data.append(hexdata[i] + hexdata[i+1] + ' ')
+                    i += 2
+                self.trans.appendHexData(''.join(data))
+
+            else:
+                status_word = tokens[4].split(':')
+                self.trans.status = int(status_word[0])
+
+                # - Data Length. For submissions, this is the requested
+                #   length. For callbacks, this is the actual length.
+
+                if len(tokens) >= 7 :
+                    self.trans.datalen = int(tokens[5])
+
+                    # - Data tag. The usbmon may not always capture data, even
+                    #   if length is nonzero.  The data words are present only
+                    #   if this tag is '='.
+
+                    # - Data words follow, in big endian hexadecimal
+                    #   format. Notice that they are not machine words, but
+                    #   really just a byte stream split into words to make it
+                    #   easier to read. Thus, the last word may contain from
+                    #   one to four bytes.  The length of collected data is
+                    #   limited and can be less than the data length report in
+                    #   Data Length word.
+
+                    if tokens[6] in ('='):
+                        self.trans.appendHexData(''.join(tokens[7:]))
+
+            self.completed.put(self.trans)
+            self.trans = Types.Transaction()
+
+        # End of copied usbmon description text
+
+        # End of log file parsing
+
+        except:
+            print "Error on line %d:" % self.lineNumber
+            traceback.print_exc()
+
+
 class Follower(threading.Thread):
     """A thread that continuously scans a file, parsing each line"""
     pollInterval = 0.1
@@ -576,4 +768,6 @@ def chooseParser(filename):
         return EllisysXmlParser
     if ext == ".tslog":
         return TimestampLogParser
+    if ext == ".mon":
+        return UsbmonLogParser
     return VmxLogParser

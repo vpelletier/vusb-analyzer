@@ -13,6 +13,8 @@
 # License, please see the README.txt. All rights reserved.
 #
 
+import binascii
+
 try:
     import gnomecanvas
 except gnomecanvas:
@@ -121,7 +123,7 @@ class Transaction(Event):
     endpt = None
     dev = None
     data = ''
-    datalen = None
+    datalen = 0
     decoded = ''
     decodedSummary = ''
 
@@ -129,10 +131,7 @@ class Transaction(Event):
         """Append data to this packet, given as a whitespace-separated
            string of hexadecimal bytes.
            """
-        d = [self.data]
-        for token in data.split():
-            d.append(chr(int(token, 16)))
-        self.data = ''.join(d)
+        self.data += binascii.a2b_hex(data.replace(' ', ''))
 
         # Increase datalen if we need to. Since the log might not
         # include complete data captures while it does include the
