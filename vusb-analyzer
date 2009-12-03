@@ -7,6 +7,8 @@
 # License, please see the README.txt. All rights reserved.
 #
 
+VERSION = "1.1"
+
 import sys, os, gtk
 from VUsbTools import Views, Log, Diff, Decode
 
@@ -61,6 +63,7 @@ def usage():
            "\n"
            "PyGTK frontend for the virtual USB analyzer\n"
            "Micah Dowty <micah@vmware.com>\n"
+           "Version %s\n"
            "\n"
            "  -t  Tail mode, start from the end of a growing log file.\n"
            "\n"
@@ -74,7 +77,7 @@ def usage():
            "\n"
            "Two log files can be specified, in order to invoke\n"
            "diff mode.\n"
-           % sys.argv[0])
+           % (sys.argv[0], VERSION))
     sys.exit(1)
 
 if __name__ == "__main__":

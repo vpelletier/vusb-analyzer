@@ -1,6 +1,7 @@
 ------------------------
 the Virtual USB Analyzer
 ------------------------
+Version 1.1
 
 This is a GUI tool for analyzing logs of traced USB
 communications. For more information, see the project's web page:
