@@ -466,6 +466,7 @@ class UsbmonLogParser:
         self.epoch = None
         self.trans = Types.Transaction()
         self.trans.frame = 0
+        self.setupData = None
         self.completed = completed
 
     def parse(self, line, timestamp=None, frame=None):
@@ -550,12 +551,12 @@ class UsbmonLogParser:
             self.trans.dev = int(pipe[-2])
             self.trans.endpt = int(pipe[-1])
 
-            if pipe[0][1] == 'i':
+            if pipe[0][1] == 'i' and self.trans.endpt != 0:
                 # Input endpoint
                 self.trans.endpt |= 0x80
 
             if len(pipe) >= 4:
-                self.trans.dev = int(pipe[1]) * 1000
+                self.trans.dev += int(pipe[-3]) * 1000
 
             # - URB Status word. This is either a letter, or several
             #   numbers separated by colons: URB status, interval,
@@ -599,15 +600,16 @@ class UsbmonLogParser:
             #   reported. For callbacks, actual length is reported.
 
             if tokens[4] in ('s'):
+                # This is a setup packet
+                # Example data stage: 23 01 0010 0002 0040
+
                 self.trans.status = 0
 
-                hexdata = (string.replace("".join(tokens[5:10]), " ", ""))
-                data = []
-                i = 0
-                while i < len(hexdata):
-                    data.append(hexdata[i] + hexdata[i+1] + ' ')
-                    i += 2
-                self.trans.appendHexData(''.join(data))
+                data = ''.join(tokens[5:10])
+                self.trans.appendHexData(data)
+
+                # save the setup data to prepend it to the setup packet data stage
+                self.setupData = data
 
             else:
                 status_word = tokens[4].split(':')
@@ -632,6 +634,11 @@ class UsbmonLogParser:
                     #   Data Length word.
 
                     if tokens[6] in ('='):
+                        if self.setupData:  # check if this is a setup package data stage
+                            # prepend setup data for the decoders
+                            self.trans.appendHexData(self.setupData)
+                            self.setupData = None
+
                         self.trans.appendHexData(''.join(tokens[7:]))
 
             self.completed.put(self.trans)
