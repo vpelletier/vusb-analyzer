@@ -6,7 +6,7 @@
 # for vusb-analyzer, with optional support
 # for gnomecanvas.
 #
-# Copyright (C) 2005-2009 VMware, Inc. Licensed under the MIT
+# Copyright (C) 2005-2010 VMware, Inc. Licensed under the MIT
 # License, please see the README.txt. All rights reserved.
 #
 

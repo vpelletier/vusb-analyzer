@@ -4,7 +4,7 @@
 #
 # A decoder module for portions of the Bluetooth HCI protocol
 #
-# Copyright (C) 2005-2009 VMware, Inc. Licensed under the MIT
+# Copyright (C) 2005-2010 VMware, Inc. Licensed under the MIT
 # License, please see the README.txt. All rights reserved.
 #
 

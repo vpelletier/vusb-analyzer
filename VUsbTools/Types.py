@@ -9,7 +9,7 @@
 # objects that don't seem to deserve a separate module
 # yet: Color, Observable and psyobj.
 #
-# Copyright (C) 2005-2009 VMware, Inc. Licensed under the MIT
+# Copyright (C) 2005-2010 VMware, Inc. Licensed under the MIT
 # License, please see the README.txt. All rights reserved.
 #
 
