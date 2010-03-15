@@ -614,6 +614,14 @@ class UsbmonLogParser:
                 status_word = tokens[4].split(':')
                 self.trans.status = int(status_word[0])
 
+                # check if this is a Callback (the 'Up' part of a transaction)
+                # on a CONTROL endpoint and prepend its Submission's (ie, its
+                # 'Down' part) setup packet, just as is done in the VMX logs.
+                if self.setupData and self.trans.endpt == 0 and \
+                   self.trans.dir == 'Up':
+                    self.trans.appendHexData(self.setupData)
+                    self.setupData = None
+
                 # - Data Length. For submissions, this is the requested
                 #   length. For callbacks, this is the actual length.
 
@@ -633,11 +641,6 @@ class UsbmonLogParser:
                     #   Data Length word.
 
                     if tokens[6] in ('='):
-                        if self.setupData:  # check if this is a setup package data stage
-                            # prepend setup data for the decoders
-                            self.trans.appendHexData(self.setupData)
-                            self.setupData = None
-
                         self.trans.appendHexData(''.join(tokens[7:]))
 
             self.completed.put(self.trans)
