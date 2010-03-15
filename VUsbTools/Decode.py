@@ -113,6 +113,7 @@ class Device:
 
         self.deviceDescriptor = None
         self.controlDecoder = self.decoderFactory.getDecoder(DecoderContext(self))
+        self.endpointDecoders = {0: self.controlDecoder}
         self._cacheEndpointDecoders()
 
     def setInterface(self, iface, alt):
@@ -160,8 +161,6 @@ class Device:
         """Update the endpointDecoders dictionary using the current configuration
            and interface settings.
            """
-        self.endpointDecoders = {0: self.controlDecoder}
-
         try:
             interfaces = self.configs[self.currentConfig][1]
         except KeyError:
@@ -173,7 +172,7 @@ class Device:
             # We found an active altsetting for this interface.
             # Activate all its endpoint decoders.
             for address, (descriptor, decoder) in endpoints.iteritems():
-                if decoder:
+                if decoder and address not in self.endpointDecoders:
                     self.endpointDecoders[address] = decoder
 
     def handleEvent(self, event):
