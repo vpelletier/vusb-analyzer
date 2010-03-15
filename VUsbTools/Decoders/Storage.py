@@ -238,7 +238,7 @@ class StatusDecoder:
 def detector(context):
     if (context.interface and context.endpoint and
         context.interface.bInterfaceClass == 0x08 and
-        context.interface.bInterfaceSubClass == 0x06 and
+        context.interface.bInterfaceSubClass in [0x05, 0x06] and
         (context.endpoint.bmAttributes & 3) == 2
         ):
         if context.endpoint.bEndpointAddress & 0x80:
