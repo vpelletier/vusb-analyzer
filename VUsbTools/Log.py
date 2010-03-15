@@ -465,11 +465,10 @@ class UsbmonLogParser:
     def __init__(self, completed):
         self.epoch = None
         self.trans = Types.Transaction()
-        self.trans.frame = 0
         self.setupData = None
         self.completed = completed
 
-    def parse(self, line, timestamp=None, frame=None):
+    def parse(self, line, timestamp=None):
         self.lineNumber += 1
         tokens = line.split()
         try:
