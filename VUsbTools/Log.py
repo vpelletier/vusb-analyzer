@@ -604,7 +604,11 @@ class UsbmonLogParser:
 
                 self.trans.status = 0
 
-                data = ''.join(tokens[5:10])
+                data = ''.join(tokens[5:7])
+                # use VMX's byte ordering for wValue, wIndex and wLength
+                data = ''.join((data, tokens[7][2:4], tokens[7][0:2]))
+                data = ''.join((data, tokens[8][2:4], tokens[8][0:2]))
+                data = ''.join((data, tokens[9][2:4], tokens[9][0:2]))
                 self.trans.appendHexData(data)
 
                 # save the setup data to prepend it to the setup packet data stage
