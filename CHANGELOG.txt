@@ -1,3 +1,8 @@
+vusb-analyzer SVN
+-----------------
+
+- Several usbmon and other bugfixes by Paul Bolle.
+
 vusb-analyzer 1.1
 -----------------
 
