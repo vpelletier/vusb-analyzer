@@ -45,6 +45,7 @@ class SCSICommand:
         0x1c: 'RECV_DIAGNOSTIC',
         0x1d: 'SEND_DIAGNOSTIC',
         0x1e: 'MEDIUM_REMOVAL',
+        0x23: 'READ_FORMAT_CAPACITIES',
         0x24: 'SET_WINDOW',
         0x25: 'GET_WINDOW',
         0x25: 'READ_CAPACITY',
