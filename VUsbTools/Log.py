@@ -471,6 +471,7 @@ class UsbmonLogParser:
     def parse(self, line, timestamp=None):
         self.lineNumber += 1
         tokens = line.split()
+        iso = 0
         try:
             # Do a small stupid sanity check if this is a correct usbmon log line
             try:
@@ -629,8 +630,29 @@ class UsbmonLogParser:
                 # - Data Length. For submissions, this is the requested
                 #   length. For callbacks, this is the actual length.
 
-                if len(tokens) >= 7 :
-                    self.trans.datalen = int(tokens[5])
+                if len(tokens) >= 7:
+                    if not pipe[0][0] == 'Z':
+                        self.trans.datalen = int(tokens[5])
+                    # The isochronous stuff is rather messy ... and probably
+                    # fails with the legacy format. It also assumes input
+                    # direction.
+                    elif self.trans.dir == 'Down' and len(tokens) >= 8:
+                        # skip two tokens:
+                        # - number of isochronous frame descriptors
+                        # - one descriptor
+                        self.trans.datalen = int(tokens[7])
+                        iso = 2
+                    elif self.trans.dir == 'Up':
+                        # The number of isochronous frame descriptors doesn't
+                        # need to equal the number of following descriptors so
+                        # we search for '=' and use the preceding token
+                        try:
+                           equal_sign = tokens.index('=')
+                           if equal_sign > 6:
+                               self.trans.datalen = int(tokens[equal_sign - 1])
+                               iso = equal_sign - 6
+                        except:
+                            pass
 
                     # - Data tag. The usbmon may not always capture data, even
                     #   if length is nonzero.  The data words are present only
@@ -644,8 +666,8 @@ class UsbmonLogParser:
                     #   limited and can be less than the data length report in
                     #   Data Length word.
 
-                    if tokens[6] in ('='):
-                        self.trans.appendHexData(''.join(tokens[7:]))
+                    if tokens[6 + iso] in ('='):
+                        self.trans.appendHexData(''.join(tokens[7 + iso:]))
 
             self.completed.put(self.trans)
             self.trans = Types.Transaction()
