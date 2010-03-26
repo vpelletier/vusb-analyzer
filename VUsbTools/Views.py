@@ -858,11 +858,13 @@ class TransactionList(View):
         self.view.connect("cursor-changed", self.onCursorChanged)
 
         self.selectionInfo = Types.Observable()
-        self.onSelectionChanged(self.view.get_selection())
+        self.selection = self.view.get_selection()
+        self.onSelectionChanged(self.selection)
 
         # Allow multiple select, and hook up a context menu
-        self.view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
-        self.view.get_selection().connect("changed", self.onSelectionChanged)
+        self.selection.set_mode(gtk.SELECTION_MULTIPLE)
+        self.changed_id = self.selection.connect("changed",
+                                                 self.onSelectionChanged)
         self.view.connect("button-press-event", self.onButtonPressed)
 
         self.createModel()
@@ -899,7 +901,7 @@ class TransactionList(View):
         # Calculate the total amount of data. For consistency, this
         # ignores SETUP packets just like saveSelectedData() does.
         dataSize = 0
-        for row in self.view.get_selection().get_selected_rows()[1]:
+        for row in self.selection.get_selected_rows()[1]:
             iter = self.model.get_iter(row)
             event = self.model.get(iter, 9)[0]
             if event.isDataTransaction():
@@ -953,7 +955,7 @@ class TransactionList(View):
         return menu
 
     def selectAll(self, widget):
-        self.view.get_selection().select_all()
+        self.selection.select_all()
 
     def followLogToggled(self, widget):
         self.followLog = widget.get_active()
@@ -969,7 +971,7 @@ class TransactionList(View):
         if dialog.run() == gtk.RESPONSE_ACCEPT:
             f = open(dialog.get_filename(), "wb")
 
-            for row in self.view.get_selection().get_selected_rows()[1]:
+            for row in self.selection.get_selected_rows()[1]:
                 iter = self.model.get_iter(row)
                 event = self.model.get(iter, 9)[0]
 
@@ -1007,11 +1009,18 @@ class TransactionList(View):
            accepts a Transaction and returns a boolean indicating whether
            it should still be selected.
            """
-        for row in self.view.get_selection().get_selected_rows()[1]:
+        # It seems unselect_iter() fires of a "changed" event
+        self.selection.handler_block(self.changed_id)
+
+        for row in self.selection.get_selected_rows()[1]:
             iter = self.model.get_iter(row)
             event = self.model.get(iter, 9)[0]
             if not callback(event):
                 self.view.get_selection().unselect_iter(iter)
+                self.selection.unselect_iter(iter)
+
+        self.onSelectionChanged(self.selection)
+        self.selection.handler_unblock(self.changed_id)
 
     def createModel(self):
         self.model = gtk.ListStore(gobject.TYPE_STRING,   # 0. Time
