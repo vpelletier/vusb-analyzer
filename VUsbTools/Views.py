@@ -525,7 +525,7 @@ class TimingDiagramPipe:
         # We use this fact to pair up and down transactions- each endpoint
         # gets a queue of 'Down' transactions which we pair up when we get
         # the corresponding 'Up'.
-        self.queue = Queue.Queue()
+        self.transactionQueue = Queue.Queue()
 
     def handleEvent(self, transaction):
         """Add a single transaction to this pipe. We queue up and
@@ -533,10 +533,10 @@ class TimingDiagramPipe:
            addPair.
            """
         if transaction.dir == 'Down':
-            self.queue.put(transaction)
+            self.transactionQueue.put(transaction)
         elif transaction.dir == 'Up':
             try:
-                self.addPair(self.queue.get(False), transaction)
+                self.addPair(self.transactionQueue.get(False), transaction)
             except Queue.Empty:
                 print "*** Warning, found an 'Up' transaction with no matching 'Down'."
                 print "    This should only occur when reading partial logfiles."
@@ -1231,7 +1231,7 @@ class StatusMonitor:
     interval = 500
 
     def __init__(self):
-        self.queue = Queue.Queue()
+        self.progressQueue = Queue.Queue()
         self.sources = {}
         self.completionCallbacks = []
 
@@ -1258,7 +1258,7 @@ class StatusMonitor:
             needUpdate = False
             try:
                 while 1:
-                    source, progress = self.queue.get(False)
+                    source, progress = self.progressQueue.get(False)
                     self.sources[source] = progress
                     needUpdate = True
             except Queue.Empty:

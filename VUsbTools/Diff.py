@@ -225,7 +225,7 @@ class DiffWindow:
             self.needDiff = False
             self.bgDiff = BackgroundDiff(self.summaries[self.views[0]],
                                          self.summaries[self.views[1]],
-                                         self.status.queue,
+                                         self.status.progressQueue,
                                          self.diffCallback)
             self.bgDiff.start()
 

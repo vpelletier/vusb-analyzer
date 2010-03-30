@@ -25,9 +25,9 @@ class UsbIOParser(Types.psyobj):
        """
     lineOriented = True
 
-    def __init__(self, completed):
+    def __init__(self, eventQueue):
         self.current = Types.Transaction()
-        self.completed = completed
+        self.eventQueue = eventQueue
 
     def parse(self, line, timestamp=None, frame=None, lineNumber=None):
         tokens = line.split()
@@ -73,7 +73,7 @@ class UsbIOParser(Types.psyobj):
            data, such as when a non-USBIO line appears in the log.
            """
         if self.current.dir:
-            self.completed.put(self.current)
+            self.eventQueue.put(self.current)
             self.current = Types.Transaction()
 
 class TimestampLogParser:
@@ -87,12 +87,12 @@ class TimestampLogParser:
        """
     lineOriented = True
 
-    def __init__(self, completed):
+    def __init__(self, eventQueue):
         self.epoch = None
         self.nameEndpoints = {}
         self.nextEp = 1
         self.lineNumber = 0
-        self.completed = completed
+        self.eventQueue = eventQueue
 
     def flush(self):
         pass
@@ -137,7 +137,7 @@ class TimestampLogParser:
                 trans.status = 0
                 trans.datalen = 0x1000
                 trans.appendDecoded(" ".join(tokens[1:]))
-                self.completed.put(trans)
+                self.eventQueue.put(trans)
         except:
             print "Error on line %d:" % self.lineNumber
             traceback.print_exc()
@@ -161,7 +161,7 @@ class VmxLogParser(UsbIOParser):
                 self.frame = int(m.group(1))
                 # Don't let SOF markers start the clock
                 if self.epoch is not None:
-                    self.completed.put(Types.SOFMarker(self.parseRelativeTime(line),
+                    self.eventQueue.put(Types.SOFMarker(self.parseRelativeTime(line),
                                                        self.frame, self.lineNumber))
                 return
 
@@ -173,7 +173,7 @@ class VmxLogParser(UsbIOParser):
                 self.frame = int(m.group(1))
                 # Don't let SOF markers start the clock
                 if self.epoch is not None:
-                    self.completed.put(Types.SOFMarker(self.parseRelativeTime(line),
+                    self.eventQueue.put(Types.SOFMarker(self.parseRelativeTime(line),
                                                        self.frame, self.lineNumber))
                 return
 
@@ -244,10 +244,10 @@ class EllisysXmlHandler(xml.sax.handler.ContentHandler):
     current = None
     characterHandler = None
 
-    def __init__(self, completed):
+    def __init__(self, eventQueue):
         self.pipes = {}
         self.pending = {}
-        self.completed = completed
+        self.eventQueue = eventQueue
         self._frameAttrs = {}
 
     def startElement(self, name, attrs):
@@ -312,7 +312,7 @@ class EllisysXmlHandler(xml.sax.handler.ContentHandler):
            """
         del self.pending[pipe]
         down = self.pipes[pipe]
-        self.completed.put(down)
+        self.eventQueue.put(down)
 
         up = Types.Transaction()
         up.dir = 'Up'
@@ -342,7 +342,7 @@ class EllisysXmlHandler(xml.sax.handler.ContentHandler):
             t.status = 0
         else:
             t.status = id
-        self.completed.put(t)
+        self.eventQueue.put(t)
 
     def startElement_Packet(self, attrs):
         id = attrs['id']
@@ -444,10 +444,10 @@ class EllisysXmlParser:
        """
     lineOriented = False
 
-    def __init__(self, completed):
-        self.completed = completed
+    def __init__(self, eventQueue):
+        self.eventQueue = eventQueue
         self.xmlParser = xml.sax.make_parser()
-        self.xmlParser.setContentHandler(EllisysXmlHandler(completed))
+        self.xmlParser.setContentHandler(EllisysXmlHandler(eventQueue))
 
     def parse(self, line):
         self.xmlParser.feed(line)
@@ -462,11 +462,11 @@ class UsbmonLogParser:
     lineOriented = True
     lineNumber = 0
 
-    def __init__(self, completed):
+    def __init__(self, eventQueue):
         self.epoch = None
         self.trans = Types.Transaction()
         self.setupData = None
-        self.completed = completed
+        self.eventQueue = eventQueue
 
     def parse(self, line, timestamp=None):
         self.lineNumber += 1
@@ -675,7 +675,7 @@ class UsbmonLogParser:
                     if tokens[6 + iso] in ('='):
                         self.trans.appendHexData(''.join(tokens[7 + iso:]))
 
-            self.completed.put(self.trans)
+            self.eventQueue.put(self.trans)
             self.trans = Types.Transaction()
 
         # End of copied usbmon description text
@@ -750,7 +750,7 @@ class Follower(threading.Thread):
         self.running = False
         try:
             while 1:
-                self.parser.completed.get(False)
+                self.parser.eventQueue.get(False)
         except Queue.Empty:
             pass
         self.join()
@@ -766,7 +766,7 @@ class QueueSink:
     batch = range(10)
 
     def __init__(self, callback):
-        self.queue = Queue.Queue(self.maxsize)
+        self.eventQueue = Queue.Queue(self.maxsize)
         self.callback = callback
         self.poll()
 
@@ -777,13 +777,13 @@ class QueueSink:
                 # This avoids calling time.clock() once per queue item.
                 for _ in self.batch:
                     try:
-                        i = self.queue.get(False)
+                        event = self.eventQueue.get(False)
                     except Queue.Empty:
                         # We have nothing to do, set a longer interval
                         gobject.timeout_add(self.interval, self.poll)
                         return False
                     else:
-                        self.callback(i)
+                        self.callback(event)
 
         except KeyboardInterrupt:
             gtk.main_quit()
