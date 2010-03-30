@@ -59,7 +59,7 @@ def profileMain(filename):
         parser.parse(line)
 
 def usage():
-    print ("usage: %s [-t] vmx.log [vmx.log]\n"
+    print ("usage: %s [-t] <log> [<log>]\n"
            "\n"
            "PyGTK frontend for the virtual USB analyzer\n"
            "Micah Dowty <micah@vmware.com>\n"
