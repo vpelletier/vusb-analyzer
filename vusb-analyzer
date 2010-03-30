@@ -70,7 +70,7 @@ def usage():
            "Supported log formats:\n"
            "   VMware VMX log file (*.log)\n"
            "   Exported XML from Ellisys Visual USB (*.xml)\n"
-           "   Linux usbmon log, raw ASCII format (*.mon)\n"
+           "   Linux usbmon log, \"1u\" (raw text data) format (*.mon)\n"
            "\n"
            "Also supports transparent decompression of gzipped\n"
            "(*.gz) files. Logs may be appended to while this \n"
