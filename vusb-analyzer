@@ -52,12 +52,6 @@ def diffMain(files, tailMode=False):
         for follower in followers:
             follower.stop()
 
-def profileMain(filename):
-    import Queue
-    parser = Log.chooseParser(filename)(Queue.Queue())
-    for line in open(filename):
-        parser.parse(line)
-
 def usage():
     print ("usage: %s [-t] <log> [<log>]\n"
            "\n"
