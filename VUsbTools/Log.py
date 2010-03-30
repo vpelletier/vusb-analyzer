@@ -691,7 +691,6 @@ class Follower(threading.Thread):
     """A thread that continuously scans a file, parsing each line"""
     pollInterval = 0.1
     running = True
-    progress = 0.0
     progressInterval = 0.2
     progressExpiration = 0
 
@@ -740,10 +739,9 @@ class Follower(threading.Thread):
             gtk.main_quit()
 
     def setProgress(self, progress):
-        self.progress = progress
         if self.progressQueue:
             self.progressQueue.put(("Loading %s" % os.path.basename(self.filename),
-                                    self.progress))
+                                    progress))
 
     def stop(self):
         # Keep the queue empty so it doesn't deadlock on put()
