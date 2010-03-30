@@ -506,6 +506,12 @@ class UsbmonLogParser:
 
             self.trans.lineNumber = self.lineNumber
 
+            # TODO Usbmon's timestamps can wrap. Annoyingly, they can wrap
+            # at either every 4096 seconds or (about) every 4296 seconds, see
+            # bugzilla.redhat.com/show_bug.cgi?id=574024 Let's wait for some
+            # feedback on that bugreport before adding (a possibly trivial)
+            # way to handle that.
+
             # - Timestamp in microseconds, a decimal number. The
             #   timestamp's resolution depends on available clock, and
             #   so it can be much worse than a microsecond (if the
