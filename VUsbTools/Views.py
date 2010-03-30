@@ -1237,9 +1237,9 @@ class StatusMonitor:
 
         self.statusbar = gtk.Statusbar()
 
-        self.progress = gtk.ProgressBar()
+        self.progressbar = gtk.ProgressBar()
         self.progressContext = self.statusbar.get_context_id("Progress")
-        self.statusbar.pack_end(self.progress, False)
+        self.statusbar.pack_end(self.progressbar, False)
 
         self.cursorLabel = gtk.Label()
         frame = gtk.Frame()
@@ -1276,13 +1276,13 @@ class StatusMonitor:
 
         self.statusbar.pop(self.progressContext)
         if busySources:
-            self.progress.show()
-            self.progress.set_fraction(overall)
+            self.progressbar.show()
+            self.progressbar.set_fraction(overall)
             self.statusbar.push(self.progressContext, ", ".join(busySources))
         else:
             # Finished with everything we were doing. Hide the progress bar,
             # clear out old progress information, and call completion handlers.
-            self.progress.hide()
+            self.progressbar.hide()
             self.sources = {}
             for f in self.completionCallbacks:
                 f()
