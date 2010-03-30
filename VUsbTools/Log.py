@@ -717,7 +717,6 @@ class Follower(threading.Thread):
 
         threading.Thread.__init__(self)
         atexit.register(self.stop)
-        self.progressCallbacks = []
 
     def run(self):
         try:
