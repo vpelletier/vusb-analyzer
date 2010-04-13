@@ -195,21 +195,28 @@ class VmxLogParser(UsbIOParser):
     _timeCache = (None, None)
 
     def parseTime(self, line):
-        """Return a unix-style timestamp for the given line.
-           XXX: This assumes the current year, so logs that straddle
-                years will have a giant discontinuity in timestamps.
-           """
+        """Return a unix-style timestamp for the given line."""
+        if line[10] != "T":
+            """XXX: This assumes the current year, so logs that straddle
+            years will have a giant discontinuity in timestamps.
+            """
+            timefmt = "%b %d %H:%M:%S"
+            stamp = line[:15]
+            usec = line[16:19]
+        else:
+            timefmt = "%Y-%m-%dT%H:%M:%S"
+            stamp = line[:19]
+            usec = line[20:23]
         # Cache the results of strptime. It only changes every
         # second, and this was taking more than 50% of our parsing time!
-        stamp = line[:15]
         savedStamp, parsed = self._timeCache
         if savedStamp != stamp:
-            parsed = time.strptime(stamp, "%b %d %H:%M:%S")
+            parsed = time.strptime(stamp, timefmt)
             self._timeCache = stamp, parsed
 
         now = time.localtime()
         try:
-            usec = int(line[16:19])
+            usec = int(usec)
         except ValueError:
             usec = 0
         return usec / 1000.0 + time.mktime((
