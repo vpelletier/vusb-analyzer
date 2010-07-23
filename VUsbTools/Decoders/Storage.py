@@ -155,7 +155,21 @@ class SCSICommand:
                        Struct.UInt16BE('lba'),
                        Struct.UInt8('length'),
                        Struct.UInt8('control'))),
+
         'READ(10)':   ("0x%(length)04x blocks at 0x%(lba)08x", lambda: (
+                       Struct.UInt8('lun'),    # FIXME: lun is actually a bitfield
+                       Struct.UInt32BE('lba'),
+                       Struct.UInt8('reserved_1'),
+                       Struct.UInt16BE('length'),
+                       Struct.UInt8('control'))),
+
+        'WRITE(6)':   ("0x%(length)02x blocks at 0x%(lba)04x", lambda: (
+                       Struct.UInt8('lun'),    # FIXME: lun is actually a bitfield
+                       Struct.UInt16BE('lba'),
+                       Struct.UInt8('length'),
+                       Struct.UInt8('control'))),
+
+        'WRITE(10)':  ("0x%(length)04x blocks at 0x%(lba)08x", lambda: (
                        Struct.UInt8('lun'),    # FIXME: lun is actually a bitfield
                        Struct.UInt32BE('lba'),
                        Struct.UInt8('reserved_1'),
