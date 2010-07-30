@@ -11,7 +11,7 @@
 #
 
 from __future__ import division
-import math, Queue, gtk, gobject
+import Queue, gtk, gobject
 from VUsbTools import Types, Style
 
 try:

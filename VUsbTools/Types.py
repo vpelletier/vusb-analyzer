@@ -16,13 +16,6 @@
 import binascii
 
 try:
-    import gnomecanvas
-except gnomecanvas:
-    print "Warning: You don't have gnome-canvas (or its python bindings) installed."
-    print "         The happy timing diagram will be disabled."
-    gnomecanvas = None
-
-try:
     from psyco.classes import psyobj
     from psyco import bind as psycoBind
 except ImportError:

@@ -12,7 +12,7 @@
 #
 
 from __future__ import division
-import sys, time, re, math, os, string, atexit
+import sys, time, re, os, string, atexit
 import xml.sax, Queue, threading, difflib
 import gtk, gobject
 import traceback, gzip, struct
