@@ -1159,7 +1159,7 @@ def detector(context):
             ifc.bInterfaceClass,
             ifc.bInterfaceSubClass,
             ifc.bInterfaceProtocol,
-            ep.bmAttributes & 0x03,
+            (ep.bmAttributes or 0) & 0x03,
         )
         if (clazz,subclazz,proto,attr) == (224,1,2,3):
             return UwbEventDecoder()
