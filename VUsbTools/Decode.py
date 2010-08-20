@@ -113,7 +113,7 @@ class Device:
 
         self.deviceDescriptor = None
         self.controlDecoder = self.decoderFactory.getDecoder(DecoderContext(self))
-        self.endpointDecoders = {0: self.controlDecoder}
+        self.endpointDecoders = {}
         self._cacheEndpointDecoders()
 
     def setInterface(self, iface, alt):
@@ -139,6 +139,7 @@ class Device:
                     device = self.deviceDescriptor,
                     descriptors = descriptors,
                     ))
+                self._cacheEndpointDecoders()
 
             elif desc.type == 'interface' and config is not None:
                 iface = desc.bInterfaceNumber
@@ -161,6 +162,10 @@ class Device:
         """Update the endpointDecoders dictionary using the current configuration
            and interface settings.
            """
+
+        # Install the current Control decoder
+        self.endpointDecoders[0] = self.controlDecoder
+
         try:
             interfaces = self.configs[self.currentConfig][1]
         except KeyError:
