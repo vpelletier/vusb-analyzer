@@ -1,6 +1,6 @@
 #
 # VUsbTools.Log
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Implements parsers for USB log files. Currently
 # this includes slurping usbAnalyzer data out of the

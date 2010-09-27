@@ -1,6 +1,6 @@
 #
 # VUsbTools.Views
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # This implements the GTK+ user interface
 # for vusb-analyzer, with optional support

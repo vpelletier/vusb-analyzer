@@ -1,6 +1,6 @@
 #
 # VUsbTools.Decoders.Bluetooth
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # A decoder module for portions of the Bluetooth HCI protocol
 #

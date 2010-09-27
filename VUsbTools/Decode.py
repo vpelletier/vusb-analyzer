@@ -1,6 +1,6 @@
 #
 # VUsbTools.Decode
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Implements decoders and decoder support for vusb-analyzer.
 #

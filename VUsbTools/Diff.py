@@ -1,6 +1,6 @@
 #
 # VUsbTools.Diff
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Implements UI support for a side-by-side diff mode.
 #

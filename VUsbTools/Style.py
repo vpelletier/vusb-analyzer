@@ -1,6 +1,6 @@
 #
 # VUsbTools.Views
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # A container for color and font preferences
 #

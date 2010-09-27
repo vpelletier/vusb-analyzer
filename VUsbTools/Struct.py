@@ -1,6 +1,6 @@
 #
 # VUsbTools.Struct
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Utilities for decoding structures and trees of structures
 # into something human-readable.

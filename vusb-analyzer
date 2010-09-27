@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Virtual USB Analyzer GUI
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Copyright (C) 2005-2010 VMware, Inc. Licensed under the MIT
 # License, please see the README.txt. All rights reserved.
@@ -56,7 +56,7 @@ def usage():
     print ("usage: %s [-t] <log> [<log>]\n"
            "\n"
            "PyGTK frontend for the virtual USB analyzer\n"
-           "Micah Dowty <micah@vmware.com>\n"
+           "Micah Elizabeth Scott <micah@vmware.com>\n"
            "Version %s\n"
            "\n"
            "  -t  Tail mode, start from the end of a growing log file.\n"

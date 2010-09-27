@@ -1,6 +1,6 @@
 #
 # VUsbTools.Types
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # This package holds Event and its subclasses,
 # the primitives used to exchange USB log information

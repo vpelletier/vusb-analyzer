@@ -1,6 +1,6 @@
 #
 # VUsbTools.Decoders.Cypress
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Decodes the bootloader interface used by Cypress EZ-USB microcontrollers
 #

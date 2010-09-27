@@ -1,6 +1,6 @@
 #
 # VUsbTools.Decoders.Storage
-# Micah Dowty <micah@vmware.com>
+# Micah Elizabeth Scott <micah@vmware.com>
 #
 # Decodes the USB bulk-only storage protocol, and portions of SCSI
 #
