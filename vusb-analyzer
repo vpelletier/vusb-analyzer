@@ -19,7 +19,8 @@ def main(filename, tailMode=False):
 
     parser = Log.chooseParser(filename)
     sink = Log.QueueSink(ui.handleEvent)
-    follower = Log.Follower(filename, parser(sink.eventQueue), ui.status.progressQueue, tailMode)
+    follower = Log.Follower(filename, parser(sink.eventQueue),
+                            ui.status.progressQueue, tailMode)
     Decode.attachView(ui)
 
     gtk.gdk.threads_init()

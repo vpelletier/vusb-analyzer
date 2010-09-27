@@ -75,6 +75,14 @@ class UInt16BE(Item):
 class UInt32BE(Item):
     _format = ">I"
 
+class UInt16BEHex(Item):
+    _format = ">H"
+    _strFormat = "0x%04X"
+
+class UInt32BEHex(Item):
+    _format = ">I"
+    _strFormat = "0x%08X"
+
 class UInt8Hex(UInt8):
     _strFormat = "0x%02X"
 
