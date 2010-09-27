@@ -43,7 +43,11 @@ class UsbIOParser(Types.psyobj):
 
         # new Log_HexDump() format:
         # USBIO:  000: 80 06 ......
-        elif len(tokens) >= 2 and len(tokens[0]) == 4 and len(tokens[1]) == 2:
+        elif (len(tokens) >= 2 and
+              len(tokens[0]) >= 4 and
+              tokens[0][-1] == ':' and
+              len(tokens[1]) == 2):
+
             data = line.split(':')
             data = data[1].lstrip()
             self.current.appendHexData(data[:48])
