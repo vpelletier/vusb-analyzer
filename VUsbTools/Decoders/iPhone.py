@@ -124,7 +124,8 @@ class USBMuxDecoder:
         self.lockdownBuffer += data
 
         if datalen == 0:
-            summary.append("empty")
+            # Leave the TCP decoder at the top of the stac
+            return
 
         elif datalen != len(data):
             # Nothing we can reliably do without the whole log.
@@ -136,7 +137,7 @@ class USBMuxDecoder:
               isascii(self.lockdownBuffer[1:])):
             # I haven't seen this documented, but sometimes lockdownd sends
             # ASCII error messages that are prefixed with one NUL byte.
-            summary.append("Message: %r" % self.lockdownBuffer[1:])
+            summary.append("Message, %r" % self.lockdownBuffer[1:])
 
         elif len(self.lockdownBuffer) >= 10 and self.lockdownBuffer[4:9] != "<?xml":
             # Something else that isn't a plist?
@@ -156,12 +157,21 @@ class USBMuxDecoder:
                 event.appendDecoded("\nComplete lockdownd packet:\n%s" %
                                     Types.hexDump(packet))
 
-                decoded = "{%s}" % " ".join(
-                    ["%s=%s" % kv for kv in
-                     plistlib.readPlistFromString(packet).items()])
+                kvFull = []
+                kvAbbrev = []
 
-                event.appendDecoded("\nDecoded plist:\n%s" % decoded)
-                summary.append(decoded)
+                for k, v in plistlib.readPlistFromString(packet).items():
+                    kvFull.append("  %s = %s" % (k, v))
+
+                    if isinstance(v, plistlib.Data):
+                        v = "(data)"
+                    elif isinstance(v, dict):
+                        v = "(dict)"
+
+                    kvAbbrev.append("%s=%s" % (k, v))
+
+                event.appendDecoded("\nDecoded plist:\n%s" % "\n".join(kvFull))
+                summary.append("{%s}" % " ".join(kvAbbrev))
 
         event.pushDecoded("lockdownd: %s" % (" ".join(summary) or "fragment"))
 
