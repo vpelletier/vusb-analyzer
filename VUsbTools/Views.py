@@ -16,7 +16,7 @@ from VUsbTools import Types, Style
 
 try:
     import gnomecanvas
-except gnomecanvas:
+except ImportError:
     print "Warning: You don't have gnome-canvas (or its python bindings) installed."
     print "         The happy timing diagram will be disabled."
     gnomecanvas = None
