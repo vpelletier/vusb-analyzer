@@ -119,6 +119,7 @@ class Transaction(Event):
     datalen = 0
     decoded = ''
     decodedSummary = ''
+    status = 0
 
     def appendHexData(self, data):
         """Append data to this packet, given as a whitespace-separated
