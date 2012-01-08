@@ -463,6 +463,126 @@ class EllisysXmlParser:
     def parse(self, line):
         self.xmlParser.feed(line)
 
+try:
+    import iti1480a.parser
+except ImportError:
+    iti1480a = None
+
+class ITIParser(object):
+    """Parses .usb files from ITI hardware protocol analyser.
+       """
+    lineOriented = False
+    _state = None
+    _base_time = None
+    _finished = False
+    _split_transaction = None
+
+    def __init__(self, eventQueue):
+        self.eventQueue = eventQueue
+        self._parse = iti1480a.parser.ReorderedStream(iti1480a.parser.Parser(self.push)).push
+        self._dispatch = {
+            iti1480a.parser.MESSAGE_RAW: lambda _, __: None,
+            iti1480a.parser.MESSAGE_RESET: lambda _, __: None,
+            iti1480a.parser.MESSAGE_TRANSACTION: self._transaction,
+            iti1480a.parser.MESSAGE_SOF: self._sof,
+            iti1480a.parser.MESSAGE_PING: lambda _, __: None,
+            iti1480a.parser.MESSAGE_SPLIT: lambda _, __: None,
+        }
+
+    def push(self, tic, message_type, data):
+        self._dispatch[message_type](tic, data)
+
+    def parse(self, data):
+        if self._finished:
+            return
+        self._finished = self._parse(data)
+
+    def _getTime(self, tic):
+        s = iti1480a.parser.tic_to_s(tic)
+        if self._base_time is None:
+            self._base_time = s
+        return s - self._base_time
+
+    def _pushTransaction(self, endpoint, device, down_s, down_data, up_s, up_data, status):
+        t_down = Types.Transaction(timestamp=self._getTime(down_s))
+        t_down.dir = 'Down'
+        t_down.status = 0
+        t_down.data = down_data
+        t_down.datalen = len(down_data)
+        self.eventQueue.put(t_down)
+        if up_s is None:
+            up_s = down_s
+        t_up = Types.Transaction(timestamp=self._getTime(up_s))
+        t_up.dir = 'Up'
+        if status == 'ACK':
+            status = 0
+        t_up.status = status
+        t_up.endpt = t_down.endpt = endpoint
+        t_up.dev = t_down.dev = device
+        t_up.data = up_data
+        t_up.datalen = len(up_data)
+        self.eventQueue.put(t_up)
+
+    def _finishState(self):
+        if self._state[3]:
+            last_data = self._state[3][-1]
+        elif self._state[2]:
+            last_data = self._state[2][-1]
+        else:
+            last_data = self._state[1]
+        start, payload, stop, end_tic = last_data
+        if stop['name'] == 'ACK':
+            assert self._state[1][1], self._state
+            setup_payload = self._state[1][1]['data']
+            assert setup_payload, self._state
+            down_payload = setup_payload
+            up_payload = setup_payload
+            if self._state[1][1]['data'][0] == '\x80':
+                for transaction in self._state[2]:
+                    if transaction[1] is not None:
+                        up_payload += transaction[1]['data']
+            else:
+                for transaction in self._state[2]:
+                    if transaction[1] is not None:
+                        down_payload += transaction[1]['data']
+            self._pushTransaction(0, start['address'], self._state[0], down_payload, end_tic, up_payload, stop['name'])
+        self._state = None
+
+    def _transaction(self, tic, data):
+        start, payload, stop, end_tic = data
+        endpoint = start['endpoint']
+        if endpoint == 0:
+            if start['name'] == 'SETUP':
+                if self._state is not None:
+                    self._finishState()
+                if stop['name'] == 'ACK':
+                    self._state = [tic, data, [], []]
+                    return
+            else:
+                assert self._state is not None
+                if (not self._state[2]) or self._state[2][-1][0]['name'] == start['name']:
+                    self._state[2].append(data)
+                elif (not self._state[3]) or self._state[3][-1][0]['name'] == start['name']:
+                    self._state[3].append(data)
+                if stop['name'] == 'STALL':
+                    self._finishState()
+                return
+        down_payload = up_payload = ''
+        if start['name'] == 'IN':
+            endpoint |= 0x80
+        if payload is not None:
+            if start['name'] == 'IN':
+                up_payload = payload['data']
+            else:
+                down_payload = payload['data']
+        if stop is None:
+            state = 0
+        else:
+            state = stop['name']
+        self._pushTransaction(endpoint, start['address'], tic, down_payload, end_tic, up_payload, state)
+
+    def _sof(self, tic, data):
+        self.eventQueue.put(Types.SOFMarker(timestamp=self._getTime(tic), frame=data['frame']))
 
 class UsbmonLogParser:
     """Parses usbmon log lines and generates Transaction objects appropriately.
@@ -819,4 +939,6 @@ def chooseParser(filename):
         return TimestampLogParser
     if ext == ".mon":
         return UsbmonLogParser
+    if ext == ".usb" and iti1480a is not None:
+        return ITIParser
     return VmxLogParser
