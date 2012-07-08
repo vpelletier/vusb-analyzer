@@ -513,7 +513,7 @@ class ITIParser(object):
         self.eventQueue.put(Types.SOFMarker(timestamp=self._getTime(data['tic']), frame=data['frame']))
 
     def _trace(self, tic, message_type, data):
-        assert message_type in (iti1480a.parser.MESSAGE_RAW, iti1480a.parser.MESSAGE_RESET), message_type
+        assert message_type in (iti1480a.parser.MESSAGE_RAW, iti1480a.parser.MESSAGE_RESET, iti1480a.parser.MESSAGE_TRANSACTION_ERROR, iti1480a.parser.MESSAGE_TRANSFER_ERROR), message_type
         print iti1480a.parser.tic_to_time(tic), message_type, data
 
     def parse(self, data):
